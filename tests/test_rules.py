@@ -1,5 +1,11 @@
 """Unit tests for deterministic client rules and mandatory escalations."""
 
+import sys
+from pathlib import Path
+
+# Add project root to path so tests can run directly with 'python tests/test_rules.py'
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import pytest
 from src.rules import check_deterministic_rules
 

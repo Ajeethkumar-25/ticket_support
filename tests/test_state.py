@@ -1,8 +1,13 @@
 """Unit tests for state management, crash-safety, and idempotency."""
 
+import sys
+from pathlib import Path
+
+# Add project root to path so tests can run directly
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import pytest
 import tempfile
-from pathlib import Path
 from src.state import StateManager
 
 

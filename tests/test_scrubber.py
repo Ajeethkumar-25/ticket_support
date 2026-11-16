@@ -1,5 +1,11 @@
 """Unit tests for PCI/PII scrubber."""
 
+import sys
+from pathlib import Path
+
+# Add project root to path so tests can run directly
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import pytest
 from src.scrubber import scrub_payment_details, contains_payment_details
 
