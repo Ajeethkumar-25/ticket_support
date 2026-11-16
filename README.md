@@ -16,17 +16,14 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env: set HELPDESK_API_KEY, CANDIDATE_EMAIL, and GROQ_API_KEY
 
-# 3. Run unit tests
+# 3. Run unit tests (no network needed)
 python -m pytest
 
-# 4. Run the benchmark evaluation on the 10 labelled reference examples
-python scripts/run_eval.py
-
-# 5. Run the agent (single command, processes all open tickets)
-python scripts/run_agent.py
-
-# To reset practice tickets and run fresh:
-python scripts/run_agent.py --reset
+# 4. Run the agent — single entry point
+python main.py               # process all open tickets
+python main.py --reset       # reset all 30 practice tickets, then run
+python main.py --eval        # score against 10 labelled examples, then run
+python main.py --reset --eval  # reset → eval → run (clean submission run)
 ```
 
 ---
