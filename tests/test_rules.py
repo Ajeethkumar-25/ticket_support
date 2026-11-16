@@ -34,7 +34,7 @@ def test_gdpr_escalation_rule():
     assert match is not None
     assert match.action == "handoff"
     assert match.category == "other"
-    assert match.priority == "P1"
+    assert match.priority == "P2"
 
 
 def test_security_incident_rule():

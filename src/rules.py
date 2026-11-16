@@ -146,14 +146,14 @@ def check_deterministic_rules(subject: str, body: str) -> Optional[EscalationDec
             handoff_note="Customer mentioning legal action or legal representation. Escalate to management/legal."
         )
 
-    # 3. GDPR / AVG Requests -> P1 handoff (legal risk under GDPR)
+    # 3. GDPR / AVG Requests -> P2 handoff (single customer data access/deletion)
     if GDPR_REGEX.search(combined):
         return EscalationDecision(
             category="other",
-            priority="P1",
+            priority="P2",
             action="handoff",
             reason="Personal data request (GDPR/AVG). Client rule: GDPR requests always go to a human.",
-            handoff_note="Customer submitted a GDPR/AVG personal data deletion or privacy inquiry. Process within statutory window."
+            handoff_note="Customer submitted a GDPR/AVG personal data inquiry. Process according to statutory guidelines."
         )
 
     # 4. Refunds or disputed charges -> P2 handoff

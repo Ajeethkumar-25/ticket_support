@@ -17,13 +17,12 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.config import is_live_api_ready, HELPDESK_BASE_URL, LLM_PROVIDER
+from src.config import HELPDESK_BASE_URL, HELPDESK_API_KEY, CANDIDATE_EMAIL
 from src.client import HelpdeskClient
 from src.llm_client import LLMClient
 from src.rules import check_deterministic_rules
 from src.dutch_verifier import verify_dutch_reply
 from src.scrubber import scrub_payment_details
-from scripts.mock_server import MOCK_EXAMPLES
 
 
 def evaluate_example(
@@ -31,7 +30,7 @@ def evaluate_example(
     llm: LLMClient,
     use_deterministic_guardrails: bool = True
 ) -> Dict[str, Any]:
-    """Evaluates a single labelled example."""
+    """Evaluates a single labelled example from the Helpdesk API."""
     eid = example["id"]
     subject = example.get("subject", "")
     body = example.get("body", "")
@@ -66,7 +65,7 @@ def evaluate_example(
         pred_reason = decision.reason
 
         if pred_action == "reply" and decision.draft_reply:
-            is_valid, _ = verify_dutch_reply(decision.draft_reply)
+            is_valid, _ = verify_dutch_reply(decision.draft_reply, language=decision.language)
             if not is_valid:
                 pred_action = "handoff"
 
@@ -103,21 +102,17 @@ def run_eval(
     use_deterministic_guardrails: bool = True,
     client: Optional[HelpdeskClient] = None
 ) -> Dict[str, Any]:
-    """Runs the eval suite across all 10 examples."""
-    examples = []
-    if client and is_live_api_ready():
-        try:
-            examples = client.get_examples()
-        except Exception as e:
-            print(f"Could not fetch examples from live API ({e}), using built-in reference examples.")
-            examples = MOCK_EXAMPLES
-    else:
-        examples = MOCK_EXAMPLES
+    """Runs the eval suite across all 10 live examples from GET /examples."""
+    helpdesk_client = client or HelpdeskClient()
+    print("Fetching live reference examples from Roosterly Helpdesk API (GET /examples)...")
+    examples = helpdesk_client.get_examples()
+    if not examples:
+        raise RuntimeError("No examples returned from Helpdesk API. Check credentials in .env.")
 
     llm = LLMClient()
 
     results = []
-    print(f"\n--- Running Eval (Provider={llm.provider.upper()}, Guardrails={'ENABLED' if use_deterministic_guardrails else 'DISABLED'}) ---")
+    print(f"\n--- Running Eval on {len(examples)} Live Examples (Guardrails={'ENABLED' if use_deterministic_guardrails else 'DISABLED'}) ---")
     
     for ex in examples:
         res = evaluate_example(ex, llm, use_deterministic_guardrails=use_deterministic_guardrails)
@@ -136,7 +131,7 @@ def run_eval(
     # Cost Calculation for Groq (Qwen / Llama):
     # Avg prompt tokens: ~650 tokens (FAQ + instructions + ticket)
     # Avg completion tokens: ~85 tokens
-    # Pricing for Groq / Open Source LLM:
+    # Pricing:
     # Input: $0.075 per 1,000,000 tokens
     # Output: $0.30 per 1,000,000 tokens
     input_tokens_per_ticket = 650
@@ -161,7 +156,7 @@ def run_eval(
         "results": results
     }
 
-    print("\n=== Eval Results Summary ===")
+    print("\n=== Live Eval Results Summary ===")
     print(f"Overall Exact Match:  {metrics['overall_exact_match']}%")
     print(f"Action Accuracy:      {metrics['action_accuracy']}%")
     print(f"Category Accuracy:    {metrics['category_accuracy']}%")

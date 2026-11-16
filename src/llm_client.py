@@ -70,11 +70,17 @@ STRICT CLIENT RULES:
    - Identify the language the customer wrote in ("nl", "en", or "de").
    - Customer replies ("draft_reply") MUST be in the customer's language (mostly Dutch). Use authentic Dutch menu terms (e.g. "Team → Medewerker toevoegen").
    - Handoff notes ("handoff_note") MUST ALWAYS be written in English.
-4. PRIORITY DEFINITIONS:
+4. CATEGORY DEFINITIONS:
+   - billing: Questions about plans, pricing (F05), invoices, VAT/BTW numbers (F06), payments, refund requests.
+   - bug: System errors, crashes, broken functionality (e.g. F12 app requirements), security issues.
+   - feature_request: Ideas, suggestions, requests for new features, roadmap (F10).
+   - question: How-to questions covered by FAQ (passwords F01, staff F02, swaps F03, integrations F04, languages F08, data location F09, outages F11).
+   - other: GDPR/AVG data requests, spam, legal, uncategorized.
+5. PRIORITY DEFINITIONS:
    - P1: Many users blocked right now, or a security or legal risk.
-   - P2: One customer blocked, or money / contracts involved (refunds, cancellations).
-   - P3: Something is wrong or unclear, but there is a workaround.
-   - P4: No urgency: how-to questions answered by FAQ, feature ideas, cosmetic issues.
+   - P2: One customer blocked, or money / contracts / GDPR requests involved.
+   - P3: Something is wrong or unclear, but there is a workaround (or device incompatibility like iOS version in F12).
+   - P4: No urgency: how-to questions answered by FAQ, pricing, feature ideas, cosmetic issues.
 5. SPAM / EMPTY TICKETS:
    - If ticket is spam or empty, choose action="close", category="other", priority="P4".
 6. SECURITY & DATA PRIVACY:

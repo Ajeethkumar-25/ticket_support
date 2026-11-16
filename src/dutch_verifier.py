@@ -37,16 +37,17 @@ ENGLISH_LEAKAGE_WORDS = [
 ]
 
 
-def verify_dutch_reply(
+def verify_reply(
     reply_text: str, 
+    language: str = "nl",
     expected_faq_id: Optional[str] = None
 ) -> Tuple[bool, List[str]]:
     """
-    Validates a Dutch reply using deterministic heuristics without requiring Dutch fluency:
+    Validates a customer reply based on the expected language:
     1. Redaction check: Never includes payment details.
     2. Length and non-emptiness check.
-    3. English leakage check: Ensure prompt instructions didn't leak English into customer reply.
-    4. Dutch greeting/closing indicators.
+    3. English leakage check for Dutch replies.
+    4. Language consistency check.
     
     Returns:
         (is_valid: bool, issues: List[str])
@@ -60,19 +61,29 @@ def verify_dutch_reply(
     if contains_payment_details(reply_text):
         return False, ["Reply contains unmasked payment or account details."]
 
-    # 2. English leakage check
-    leakage_count = 0
-    for pattern in ENGLISH_LEAKAGE_WORDS:
-        if re.search(pattern, reply_text, re.IGNORECASE):
-            leakage_count += 1
-    if leakage_count >= 2:
-        issues.append(f"Detected English leakage ({leakage_count} English phrases) in customer reply.")
+    # 2. Language-specific checks
+    if language == "nl":
+        leakage_count = 0
+        for pattern in ENGLISH_LEAKAGE_WORDS:
+            if re.search(pattern, reply_text, re.IGNORECASE):
+                leakage_count += 1
+        if leakage_count >= 2:
+            issues.append(f"Detected English leakage ({leakage_count} English phrases) in Dutch customer reply.")
 
-    # 3. Check for typical Dutch communicative markers
-    dutch_markers = [r"\b(je|jij|u|uw|het|de|een|voor|naar|onder|kunt|gaan|klik)\b"]
-    matches = sum(1 for m in dutch_markers if re.search(m, reply_text, re.IGNORECASE))
-    if matches == 0:
-        issues.append("Reply lacks characteristic Dutch language words.")
+        dutch_markers = [r"\b(je|jij|u|uw|het|de|een|voor|naar|onder|kunt|gaan|klik)\b"]
+        matches = sum(1 for m in dutch_markers if re.search(m, reply_text, re.IGNORECASE))
+        if matches == 0:
+            issues.append("Dutch reply lacks characteristic Dutch language words.")
+    elif language == "en":
+        # Ensure reply is actually English
+        english_markers = [r"\b(you|the|is|in|at|to|for|please|app|ios|android)\b"]
+        matches = sum(1 for m in english_markers if re.search(m, reply_text, re.IGNORECASE))
+        if matches == 0:
+            issues.append("English reply lacks basic English vocabulary.")
 
     is_valid = len(issues) == 0
     return is_valid, issues
+
+
+# Alias for backward compatibility
+verify_dutch_reply = verify_reply

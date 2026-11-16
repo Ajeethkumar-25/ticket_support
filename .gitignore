@@ -1,7 +1,8 @@
 # Environment variables & secrets
 .env
 
-# Local state
+# Logs and local state
+logs/
 data/state.json
 
 # Candidate pack reference materials

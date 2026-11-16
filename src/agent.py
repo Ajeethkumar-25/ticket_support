@@ -106,8 +106,8 @@ class SupportTicketAgent:
 
             if action == "reply":
                 draft = decision.draft_reply or ""
-                # 5. Verify Dutch reply quality & grounding
-                is_valid, issues = verify_dutch_reply(draft)
+                # 5. Verify customer reply quality & grounding
+                is_valid, issues = verify_dutch_reply(draft, language=language)
                 if not is_valid:
                     logger.warning(
                         "Ticket %s Dutch reply failed verification (%s). Falling back safely to human handoff.",

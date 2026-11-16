@@ -1,4 +1,4 @@
-"""Single-command entrypoint to run the Roosterly Support Ticket Agent."""
+"""Single-command entrypoint to run the Roosterly Support Ticket Agent on the live Helpdesk API."""
 
 import argparse
 import sys
@@ -14,32 +14,28 @@ from src.state import StateManager
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run the Roosterly Support Ticket Agent.")
+    parser = argparse.ArgumentParser(description="Run the Roosterly Support Ticket Agent against the live Helpdesk API.")
     parser.add_argument(
         "--reset", 
         action="store_true", 
         help="Re-open all practice tickets before running (calls POST /practice/reset and clears local state)."
     )
-    parser.add_argument(
-        "--mock",
-        action="store_true",
-        help="Run against local mock server (http://127.0.0.1:8000)."
-    )
     args = parser.parse_args()
 
-    base_url = "http://127.0.0.1:8000" if args.mock else HELPDESK_BASE_URL
-    api_key = "mock_key" if args.mock else None
-    email = "test@example.com" if args.mock else None
+    if not is_live_api_ready():
+        print("Error: Live Helpdesk credentials are not configured in .env.")
+        print("Please ensure HELPDESK_API_KEY and CANDIDATE_EMAIL are set.")
+        sys.exit(1)
 
-    client = HelpdeskClient(base_url=base_url, api_key=api_key, email=email)
+    client = HelpdeskClient()
     state = StateManager()
 
     if args.reset:
-        print("Resetting practice tickets in helpdesk...")
+        print("Resetting practice tickets in live Helpdesk API (POST /practice/reset)...")
         try:
-            client.reset_practice()
+            res = client.reset_practice()
             state.reset()
-            print("Practice environment and local state reset successfully.")
+            print("Practice environment and local state reset successfully:", res)
         except Exception as e:
             print(f"Error resetting practice tickets: {e}")
             sys.exit(1)
