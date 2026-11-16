@@ -19,16 +19,9 @@ HELPDESK_BASE_URL = os.getenv(
 HELPDESK_API_KEY = os.getenv("HELPDESK_API_KEY", "")
 CANDIDATE_EMAIL = os.getenv("CANDIDATE_EMAIL", "")
 
-# LLM Provider Configuration
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq").lower()
-
-# Groq API
+# Groq API Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
-
-# Gemini API
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 # Operational Parameters
 REQUEST_RATE_LIMIT = float(os.getenv("REQUEST_RATE_LIMIT", "4.5"))  # requests per second (< 5.0)
@@ -56,9 +49,5 @@ def is_live_api_ready() -> bool:
 
 
 def is_llm_ready() -> bool:
-    """Check if the active LLM provider is configured."""
-    if LLM_PROVIDER == "groq":
-        return bool(GROQ_API_KEY)
-    elif LLM_PROVIDER == "gemini":
-        return bool(GEMINI_API_KEY)
-    return False
+    """Check if the Groq LLM API key is configured."""
+    return bool(GROQ_API_KEY)

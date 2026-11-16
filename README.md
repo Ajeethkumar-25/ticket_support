@@ -16,7 +16,7 @@ pip install -r requirements.txt
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env and supply your HELPDESK_API_KEY, CANDIDATE_EMAIL, and GROQ_API_KEY (or GEMINI_API_KEY)
+# Edit .env and supply your HELPDESK_API_KEY, CANDIDATE_EMAIL, and GROQ_API_KEY
 
 # 3. Run unit tests
 python -m pytest
@@ -35,7 +35,7 @@ python scripts/run_agent.py --reset
 
 ## Decisions
 
-1. **Hybrid Deterministic Guardrails + Fast Multilingual LLM:** To uphold the *"safety first"* client mandate, deterministic regex filters intercept non-negotiable human escalations (refunds, GDPR/AVG deletions, contract cancellations, legal threats, security incidents, churn threats) before invoking the LLM. FAQ questions and edge cases are routed to **Qwen 2.5 / 3 via Groq** (with Gemini fallback) in structured JSON mode. This ensures 0% hallucination risk on legal/financial policies while keeping response latency sub-second.
+1. **Hybrid Deterministic Guardrails + Fast Multilingual LLM:** To uphold the *"safety first"* client mandate, deterministic regex filters intercept non-negotiable human escalations (refunds, GDPR/AVG deletions, contract cancellations, legal threats, security incidents, churn threats) before invoking the LLM. FAQ questions and edge cases are routed to **Qwen 2.5 / 3 via Groq** in structured JSON mode. This ensures 0% hallucination risk on legal/financial policies while keeping response latency sub-second.
 2. **Handling Dutch without Speaking Dutch:** Customer tickets and FAQ answers are processed natively in Dutch. To guarantee correctness without manual fluency, the agent uses a dual-verification strategy:
    - Grounding check verifying that draft replies strictly cite official Dutch menu paths (e.g., `Team → Medewerker toevoegen`, `Instellingen → Koppelingen → Salaris`).
    - Leakage and sentiment filters ensuring no English leakage in customer replies, while handoff notes are strictly formatted in English for support staff. If verification detects any anomaly, the ticket safely degrades to human handoff.

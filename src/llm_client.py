@@ -1,6 +1,6 @@
-"""Unified LLM Client supporting Groq and Google Gemini.
+"""Groq LLM Client for Ticket Triage and Decision Synthesis.
 
-Defaults to Groq with Qwen 2.5/3 for fast, reliable, low-latency, quota-friendly inference.
+Uses Groq with Qwen 2.5/3 for fast, reliable, low-latency, quota-friendly inference.
 """
 
 from typing import Optional, Literal, Dict, Any
@@ -10,13 +10,7 @@ import httpx
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception
 
-from src.config import (
-    LLM_PROVIDER,
-    GROQ_API_KEY,
-    GROQ_MODEL,
-    GEMINI_API_KEY,
-    GEMINI_MODEL
-)
+from src.config import GROQ_API_KEY, GROQ_MODEL
 from src.rules import FAQ_KNOWLEDGE_BASE
 from src.scrubber import scrub_payment_details
 
@@ -112,21 +106,16 @@ def is_retryable_llm_error(exception: BaseException) -> bool:
 
 
 class LLMClient:
-    """Unified LLM client supporting Groq and Gemini."""
+    """Production Groq LLM client using Qwen."""
 
     def __init__(
         self, 
-        provider: Optional[str] = None,
         groq_api_key: Optional[str] = None,
-        groq_model: Optional[str] = None,
-        gemini_api_key: Optional[str] = None,
-        gemini_model: Optional[str] = None
+        groq_model: Optional[str] = None
     ):
-        self.provider = (provider or LLM_PROVIDER).lower()
         self.groq_api_key = groq_api_key or GROQ_API_KEY
         self.groq_model = groq_model or GROQ_MODEL
-        self.gemini_api_key = gemini_api_key or GEMINI_API_KEY
-        self.gemini_model = gemini_model or GEMINI_MODEL
+        self.api_url = "https://api.groq.com/openai/v1/chat/completions"
 
     @retry(
         retry=retry_if_exception(is_retryable_llm_error),
@@ -139,23 +128,10 @@ class LLMClient:
         body: str, 
         customer_plan: Optional[str] = None
     ) -> TicketTriageDecision:
-        """Triage a ticket using the configured LLM provider."""
+        """Triage a customer ticket using Groq."""
         clean_subject, _ = scrub_payment_details(subject)
         clean_body, _ = scrub_payment_details(body)
 
-        if self.provider == "groq":
-            return self._triage_with_groq(clean_subject, clean_body, customer_plan)
-        else:
-            return self._triage_with_gemini(clean_subject, clean_body, customer_plan)
-
-    def _triage_with_groq(
-        self, 
-        subject: str, 
-        body: str, 
-        customer_plan: Optional[str]
-    ) -> TicketTriageDecision:
-        """Invokes Groq API with JSON mode."""
-        url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.groq_api_key}",
             "Content-Type": "application/json"
@@ -164,8 +140,8 @@ class LLMClient:
         user_content = f"""Customer Plan: {customer_plan or "Unknown"}
 
 <ticket_data>
-Subject: {subject}
-Body: {body}
+Subject: {clean_subject}
+Body: {clean_body}
 </ticket_data>
 
 Classify this ticket and return the decision JSON:"""
@@ -181,7 +157,7 @@ Classify this ticket and return the decision JSON:"""
         }
 
         with httpx.Client(timeout=25.0) as client:
-            response = client.post(url, headers=headers, json=payload)
+            response = client.post(self.api_url, headers=headers, json=payload)
             if response.status_code == 429:
                 retry_after_str = response.headers.get("retry-after", "2.5")
                 try:
@@ -203,44 +179,4 @@ Classify this ticket and return the decision JSON:"""
         if parsed.get("action") == "handoff" and "handoff_note" not in parsed:
             parsed["handoff_note"] = parsed.get("reason", "")
 
-        return TicketTriageDecision(**parsed)
-
-    def _triage_with_gemini(
-        self, 
-        subject: str, 
-        body: str, 
-        customer_plan: Optional[str]
-    ) -> TicketTriageDecision:
-        """Invokes Google Gemini REST API."""
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent"
-        headers = {
-            "Content-Type": "application/json",
-            "X-goog-api-key": self.gemini_api_key
-        }
-
-        user_content = f"""Customer Plan: {customer_plan or "Unknown"}
-
-<ticket_data>
-Subject: {subject}
-Body: {body}
-</ticket_data>
-
-Analyze this ticket and generate the decision JSON."""
-
-        payload = {
-            "system_instruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
-            "contents": [{"parts": [{"text": user_content}]}],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "temperature": 0.1
-            }
-        }
-
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-
-        raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-        parsed = json.loads(raw_text)
         return TicketTriageDecision(**parsed)

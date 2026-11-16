@@ -133,10 +133,10 @@ def run_eval(
     action_acc = sum(1 for r in results if r["matches"]["action"]) / total
     overall_acc = sum(1 for r in results if r["matches"]["all"]) / total
 
-    # Cost Calculation for Gemini 2.5 Flash:
+    # Cost Calculation for Groq (Qwen / Llama):
     # Avg prompt tokens: ~650 tokens (FAQ + instructions + ticket)
     # Avg completion tokens: ~85 tokens
-    # Pricing for Gemini 2.5 Flash:
+    # Pricing for Groq / Open Source LLM:
     # Input: $0.075 per 1,000,000 tokens
     # Output: $0.30 per 1,000,000 tokens
     input_tokens_per_ticket = 650

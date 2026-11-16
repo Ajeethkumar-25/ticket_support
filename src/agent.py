@@ -4,7 +4,7 @@ Implements the complete processing loop:
 1. Paginates through open tickets.
 2. Applies idempotency checks (skips tickets handled in local state).
 3. Evaluates deterministic escalation rules (refunds, GDPR, cancellations, security).
-4. Invokes Gemini 2.5 Flash for triage and reply/handoff generation.
+4. Invokes Groq with Qwen for triage and reply/handoff generation.
 5. Verifies Dutch reply quality and grounding.
 6. Posts decisions to the Helpdesk API with robust error handling.
 7. Logs sanitized 1-line-per-ticket entries to logs/tickets.log.
