@@ -9,11 +9,21 @@ Usage:
 """
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
 # Ensure project root is on the import path when run directly
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# Configure the root logger ONCE here — all named loggers in src/* inherit this
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),   # console output
+    ]
+)
 
 from src.config import is_live_api_ready, HELPDESK_BASE_URL, GROQ_MODEL
 from src.client import HelpdeskClient

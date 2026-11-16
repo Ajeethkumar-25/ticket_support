@@ -12,7 +12,6 @@ Implements the complete processing loop:
 
 from typing import Dict, Any, Optional
 import logging
-import sys
 
 from src.client import HelpdeskClient, TicketAlreadyHandledError, HelpdeskAPIError
 from src.llm_client import LLMClient, TicketTriageDecision
@@ -22,10 +21,7 @@ from src.state import StateManager
 from src.logger import TicketLogger
 from src.scrubber import scrub_payment_details
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
+# Module-level named logger — configured by the application entrypoint (main.py)
 logger = logging.getLogger("helpdesk_agent")
 
 
