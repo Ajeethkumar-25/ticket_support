@@ -6,6 +6,7 @@ Uses Groq with Qwen 2.5/3 for fast, reliable, low-latency, quota-friendly infere
 from typing import Optional, Literal, Dict, Any
 import json
 import logging
+import time
 import httpx
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception
@@ -162,16 +163,18 @@ Classify this ticket and return the decision JSON:"""
             ]
         }
 
+        # Proactive spacing to prevent bursting against Groq TPM/RPM limits
+        time.sleep(1.0)
+
         with httpx.Client(timeout=25.0) as client:
             response = client.post(self.api_url, headers=headers, json=payload)
             if response.status_code == 429:
-                retry_after_str = response.headers.get("retry-after", "2.5")
+                retry_after_str = response.headers.get("retry-after", "3.0")
                 try:
                     retry_after = float(retry_after_str)
                 except ValueError:
-                    retry_after = 2.5
+                    retry_after = 3.0
                 logger.warning("Groq rate limit (429) hit. Pausing for %.2fs", retry_after)
-                import time
                 time.sleep(retry_after)
             response.raise_for_status()
             data = response.json()
