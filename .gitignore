@@ -6,10 +6,7 @@ logs/
 data/state.json
 
 # Candidate pack reference materials
-Nordavo_Test_Assignment_Agentic_AI_Engineer.pdf
-api_reference.md
-candidate_faq.md
-faq.md
+
 curl_commands.md
 
 # Python
